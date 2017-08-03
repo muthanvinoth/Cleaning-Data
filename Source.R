@@ -1,75 +1,70 @@
-# Getting and Cleaning Data
+# Load packages we are going to work with
+
+library(dplyr)          # Working with tables
+
+#1. Merge the training and the test data.
 
 
+#reading the data general and training.
 
-## Loading packages and preprocessing the data
+features        <- read.table("./features.txt",header=FALSE)
+activityLabel   <- read.table("./activity_labels.txt",header=FALSE)
+colnames(activityLabel)<-c("activityId","activityType")
 
-
-```r
-library(plyr) 
-# Function to pre-process data
 Readf <- function(fname,features) {
-  
-  #Reading data to variable, 
   
   sData    <-read.table(gsub('xyz',fname, "./xyz/subject_xyz.txt"), header=FALSE)
   xData          <- read.table(gsub('xyz',fname,"./xyz/X_xyz.txt"), header=FALSE)
   yData          <- read.table(gsub('xyz',fname,"./xyz/y_xyz.txt"), header=FALSE)
   
+  
   #Assign column names to the data above.
+  
+  
   colnames(sData) <- "subject"
   colnames(xData) <- features[,2]
   colnames(yData) <- c("activityId")
 
-  #Merging Data to result...
+  
+  
+  #Merging training Data...
   
   result <- cbind(yData,sData,xData)
   
 }
-```
-
-
-
-
-## 1. Merge the training and the test data
-
-
-```r
-# load common dataset.
-features        <- read.table("./features.txt",header=FALSE)
-activityLabel   <- read.table("./activity_labels.txt",header=FALSE)
-colnames(activityLabel)<-c("activityId","activityType")
-
-
-#load specific dataset.
 
 trainData<-Readf('train',features)
 testData<-Readf('test',features)
 
+
+
+
+
+
+#final merged data
+
 finalData <- rbind(trainData,testData)
-```
 
-## 2. Extract only the measurements on the mean and standard deviation for each measurement
+# creating a vector for column names to be used further
 
-```r
 colNames <- colnames(finalData);
 
-# extract columns by grep
+
+
+# 2. Extract only the measurements on the mean and standard deviation for each measurement
+
+
 data_mean_std <-finalData[,grepl("mean|std|subject|activity",colnames(finalData))]
-```
-## 3. #Uses descriptive activity names to name the activities in the data set
 
-```r
+
+
+#3. #Uses descriptive activity names to name the activities in the data set
+
+
 data_mean_std<- merge(x=data_mean_std, y=activityLabel, by="activityId")
-```
 
+#4. Appropriately labels the data set with descriptive variable names.
 
-##4. Appropriately labels the data set with descriptive variable names.
-1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
-
-
-
-```r
 #Remove parentheses
 
 names(data_mean_std) <- gsub("\\(|\\)", "", names(data_mean_std), perl  = TRUE)
@@ -86,15 +81,13 @@ names(data_mean_std) <- gsub("^f", "Freq.", names(data_mean_std))
 names(data_mean_std) <- gsub("BodyBody", "Body", names(data_mean_std))
 names(data_mean_std) <- gsub("mean", "Mean", names(data_mean_std))
 names(data_mean_std) <- gsub("std", "Std", names(data_mean_std))
-```
-## 5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
 
 
 
+#creates a second, independent tidy data set with the average of each variable for each activity and each subject.
 
-```r
+
 tidydata_average_sub<- ddply(data_mean_std, c("subject","activityType"), numcolwise(mean))
 
 write.table(tidydata_average_sub,file="tidydata.txt",row.names = FALSE)
-```
 
